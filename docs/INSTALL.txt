@@ -1,0 +1,32 @@
+To install websock, you will need libtool, autoconf, and automake.
+
+Just run ./autogen.sh in the root directory of the page.
+
+After running autogen.sh, if no errors are reported, you should be able to:
+
+CFLAGS="-lpthread -levent" ./configure && make && sudo make install
+
+After this, you may need to check your ldconfig to ensure it sees libwebsock. This is a current issue that is being worked on. Issue out the following command:
+
+ldconfig -p | grep websock
+
+And you should see something similar to this:
+
+        libwebsock.so.1 (libc6,x86-64) => /usr/local/lib/libwebsock.so.1
+        libwebsock.so (libc6,x86-64) => /usr/local/lib/libwebsock.so
+
+If you do not, then open up your /etc/ld.so.conf in your favorite text editor, and add the following two lines at the top of it:
+
+/usr/local/lib
+/usr/lib
+
+Once done with that, run the following:
+
+ldconfig -v && ldconfig -p | grep websock
+
+You should now see libwebsock showing up, and you’re good to go for the installation. I’ll work on correcting this first to remove the need for the CFLAGS on configure as well as the path issue in regards to ldconfig. 
+
+To use the library you must link against libwebsock and ssl.  For example,
+to compile the test.c program in the root.
+
+gcc test.c -o test -lwebsock -lssl
