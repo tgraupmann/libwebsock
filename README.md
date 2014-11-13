@@ -14,3 +14,11 @@ the websocket protocol, without the need to focus on websocket protocol
 specifics nor even socket specifics. It handles the sockets and the protocol
 for you, allowing you to focus on the core logic of your application.
 
+* Event Callbacks
+* Support for SSL
+* Extremely easy to use
+* Uses [libevent][2] for maximum portability (tested on Linux, FreeBSD and Mac OS)
+* Supports IPv4 and IPv6
+* Passes the Autobahn Test suite
+* Handles both WebSocket protocol and socket connections for you
+
