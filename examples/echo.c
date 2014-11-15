@@ -81,7 +81,7 @@ main(int argc, char *argv[])
     fprintf(stderr, "Usage: %s <port to listen on>\n\nNote: You must be root to bind to port below 1024\n", argv[0]);
     exit(0);
   }
-  ctx = libwebsock_init();
+  ctx = libwebsock_init(NULL,NULL);
   if(ctx == NULL) {
     fprintf(stderr, "Error during libwebsock_init.\n");
     exit(1);

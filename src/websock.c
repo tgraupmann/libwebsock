@@ -1,6 +1,7 @@
 /*
  * This file is part of libwebsock
  *
+ * Copyright (C) 2014-2015 Jonathan Hall <jhall@futuresouth.us>
  * Copyright (C) 2012-2013 Payden Sutherland
  *
  * libwebsock is free software; you can redistribute it and/or modify
@@ -17,12 +18,13 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-
 #include "websock.h"
 #include "sha1.h"
 #include "base64.h"

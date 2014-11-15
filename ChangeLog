@@ -1,0 +1,56 @@
+!-----------------------------------------------------------------------------------------------------------------!
+
+>2014-11-15  Jonathan Hall   <jhall@futuresouth.us>
+
+ & libwebsock 1.0.8
+
+ - The changes made in this revision are addressing code cleanup and logic flow. libwebsock will no longer be
+ - initiated with a seperate function to specify flags to be passed on to libevent. The goal is to develop more
+ - control of the framing protocol and the data frames, allowing for the possibility of actually streaming content
+ - through the websocket for example, while also allowing the library to be easily integrated in to existing code
+ - that is already using libevent.
+ -
+ - Currently, libwebsock only supports the sending of unfragmented messages that already have the FIN bit set. The
+ - goal is to allow actual streaming through the socket and to not set the FIN bit until the stream is completed.
+ - A good use-case for this would be video or audio streaming and multiplexing.
+ -
+ - The version and revision have been changed. libwebsocket 1.0 provided very basic functionality, as does the
+ - current version. Version 2.0 will have a lot of advancements and features making it significantly more powerful,
+ - yet still extremely simple to implement. 
+
+ * API: libwebsock is now initialized with two arguments: an optional event base and optional flags. Either
+ may be set to NULL. When set to NULL, libwebsock will use its own libevent base and will default to fragmented
+ Text data frames. The arguments are added for expansion to allow libwebsock to be tied to a custom libevent
+ implementation. This is still planned and not functional yet. I need to build it appropriately so that the context
+ stays specific to libwebsock, and that using a custom event does not interfere with that. ctx->base usage needs
+ to be reviewed.
+
+ * api.c (libwebsock_init_base): Removed function. Not neccessary as a library function. Implemented in to
+ libwebsock_init(struct event_base *base,int *flags)
+
+ * api.c (libwebsock_init_flags): Removed function. Flags now setwith integer pointer to prepare for allowing
+ better control of the context from a specified event base. If no desired flags, libwinsock_init should be called
+ with NULL
+
+ *api.c (libwebsock_init): The libwebsock_init() function now takes two arguments at this point. The first arg
+ will be used to hook libwebsock to an already existing or user-specified event base, allowing for integration
+ with libevent based applications to trigger sends, receives etc. The second argument is the flags argument
+ which is passed to libevent_base_loop() by libwebsock_wait() .
+
+ *examples/*.c: The libwebsock_init() function has been changed in all examples to reflect the new format for
+ initializing.
+
+>_END_ 2014-11-15 J. Hall
+
+!-----------------------------------------------------------------------------------------------------------------!
+
+>2013 Payden Kyle Sutherland <Deceased, 12/03/1986 - 11/24/2014>
+
+ - Initial base development and conceptual design may be found at https://github.com/payden/libwebsock
+
+>_END_ 2013 P. Sutherland
+
+!-----------------------------------------------------------------------------------------------------------------!
+                                Copyright 2014, 2015 Free Software Foundation, Inc.
+                        Copying and distribution of this file, with or without modification, are
+                        permitted provided the copyright notice and this notice are preserved.

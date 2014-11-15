@@ -94,7 +94,8 @@ main(int argc, char *argv[])
 {
   struct passwd *pwd;
   libwebsock_context *ctx = NULL;
-  ctx = libwebsock_init_flags(WS_NONBLOCK);
+  int flags = WS_NONBLOCK;
+  ctx = libwebsock_init(NULL,&flags);
   if(ctx == NULL) {
     fprintf(stderr, "Error during libwebsock_init.\n");
     exit(1);

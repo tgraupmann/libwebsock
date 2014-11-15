@@ -1,6 +1,7 @@
 /*
  * This file is part of libwebsock
  *
+ * Copyright (C) 2014-2015 Jonathan Hall <jhall@futuresouth.us>
  * Copyright (C) 2012-2013 Payden Sutherland
  *
  * libwebsock is free software; you can redistribute it and/or modify
@@ -33,9 +34,7 @@ void libwebsock_wait(libwebsock_context *ctx);
 void libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port);
 void libwebsock_bind_socket(libwebsock_context *ctx, evutil_socket_t sockfd);
 char *libwebsock_version_string(void);
-libwebsock_context *libwebsock_init(void);
-libwebsock_context *libwebsock_init_flags(int flags);
-libwebsock_context *libwebsock_init_base(struct event_base *base, int flags);
+libwebsock_context *libwebsock_init(struct event_base *base,int *flags);
 
 #ifdef WEBSOCK_HAVE_SSL
 void libwebsock_bind_ssl(libwebsock_context *ctx, char *listen_host, char *port, char *keyfile, char *certfile);

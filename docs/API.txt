@@ -14,7 +14,7 @@ The most minimalistic echo server follows:
 
 int main(int argc, char **argv) {
 	libwebsock_context *ctx = NULL;
-	ctx = libwebsock_init();
+	ctx = libwebsock_init(NULL,NULL);
 	if(ctx == NULL) {
 		fprintf(stderr, "Error during libwebsock_init.\n");
 		exit(1);
@@ -81,7 +81,7 @@ You would then have to tell libwebsock about it before calling
 libwebsock_wait().  You would do so by setting the context's
 onmessage pointer, like so:
 
-libwebsock_context *ctx = libwebsock_init();
+libwebsock_context *ctx = libwebsock_init(NULL,NULL);
 ctx->onmessage = &my_receive_callback; //&my_receive_callback points to your callback function
 libwebsock_bind(ctx, "0.0.0.0", "8080");
 libwebsock_wait(ctx);
@@ -156,12 +156,13 @@ accepts the same parameters plus chainfile for certificate bundles.
 libwebsock_bind_ssl simply calls libwebsock_bind_ssl_real with
 chainfile set to NULL.
 
-libwebsock_context *libwebsock_init(void);
+libwebsock_context *libwebsock_init(struct event_base *base, int *flags);
 This functions allocates memory for a libwebsock_context and initializes
 it with some defaults.  It registers the default callbacks to be associated
-with this context.  It calls epoll_create and stores the epoll_fd in the
-context.  It also allocates memory for the epoll event buffer which is
-pointed to by ctx->events.
+with the specified context and flags. For now, the only support is for the
+flags. The event base portion is still under development, and should always
+be NULL until further notice. The flags are passed to libevent_base_loop via
+libwebsock_wait().
 
 libwebsock_context *libwebsock_init_base(struct event_base *base, int
 flags)

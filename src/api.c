@@ -1,6 +1,7 @@
 /*
  * This file is part of libwebsock
  *
+ * Copyright (C) 2014-2015 Jonathan Hall <jhall@futuresouth.us>
  * Copyright (C) 2012-2013 Payden Sutherland
  *
  * libwebsock is free software; you can redistribute it and/or modify
@@ -147,6 +148,7 @@ void
 libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port)
 {
   struct addrinfo hints, *servinfo, *p;
+  struct event *listener_event;
   evutil_socket_t sockfd;
   int yes = 1;
 
@@ -190,88 +192,68 @@ libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port)
 
   if (listen(sockfd, LISTEN_BACKLOG) == -1) {
     perror("listen");
+    lws_free(ctx); // Added 11/14/14
     exit(-1);
   }
 
-  libwebsock_bind_socket(ctx,  sockfd);
+  libwebsock_bind_socket(ctx,  sockfd);    
 }
 
-void 
+void
 libwebsock_bind_socket(libwebsock_context *ctx, evutil_socket_t sockfd)
 {
-  struct event *listener_event = event_new(ctx->base, sockfd, EV_READ | EV_PERSIST, libwebsock_handle_accept, (void *) ctx);
-  event_add(listener_event, NULL);
-}
-
-static struct event_base *
-libwebsock_make_event_base(void) {
-  if (evthread_use_pthreads()) {
-    fprintf(stderr, "Unable to enable use of pthreads for libevent.\n");
-    return NULL;
-  }
-  event_set_mem_functions(lws_malloc, lws_realloc, lws_free);
-  struct event_base *base = event_base_new();
-  if (!base) {
-    fprintf(stderr, "Unable to create new event base.\n");
-    return NULL;
-  }
-  return base;
+    struct event *listener_event = event_new(ctx->base, sockfd, EV_READ | EV_PERSIST, libwebsock_handle_accept, (void *) ctx);
+    event_add(listener_event, NULL);
 }
 
 libwebsock_context *
-libwebsock_init(void) 
+libwebsock_init(struct event_base *base, int *flags)
 {
-  libwebsock_context *ctx;
-  struct event_base *base = libwebsock_make_event_base();
+    libwebsock_context *ctx;
+    //struct event_base *base = libwebsock_make_event_base();
+    ctx = (libwebsock_context *) lws_calloc(sizeof(libwebsock_context));
+    
+    if (base == NULL){
+        
+    
+        if (evthread_use_pthreads()) {
+            fprintf(stderr,"Unable to pthread libevent!\n");
+            return NULL;
+        }
+        
+        event_set_mem_functions(lws_malloc,lws_realloc,lws_free);
+    
+        base = event_base_new();
+        
+        ctx->base = base;
+        ctx->owns_base = 1;
+        
+    } else {
+        ctx->base = base;
+    }
+    
+    if (!base)
+        return NULL;
 
-  if (!base) {
-    return NULL;
-  }
-
-  ctx = libwebsock_init_base(base, 0);
-  if (ctx) {
-    ctx->owns_base = 1;
-  }
-  return ctx;
-}
-
-libwebsock_context *
-libwebsock_init_flags(int flags)
-{
-  libwebsock_context *ctx;
-  struct event_base *base = libwebsock_make_event_base();
-
-  if (!base) {
-    return NULL;
-  }
-
-  ctx = libwebsock_init_base(base, flags);
-  if (ctx) {
-    ctx->owns_base = 1;
-  }
-  return ctx;
-}
-
-libwebsock_context *
-libwebsock_init_base(struct event_base *base, int flags)
-{
-  libwebsock_context *ctx;
-  ctx = (libwebsock_context *) lws_calloc(sizeof(libwebsock_context));
-
-  ctx->base = base;
-  ctx->flags = flags;
-  ctx->onclose = libwebsock_default_onclose_callback;
-  ctx->onopen = libwebsock_default_onopen_callback;
-  ctx->control_callback = libwebsock_default_control_callback;
-  ctx->onmessage = libwebsock_default_onmessage_callback;
-
+    
+    if (flags != NULL) {
+        ctx->flags = *flags;
+    } else {
+        ctx->flags = 0;
+    }
+    
+    ctx->onclose = libwebsock_default_onclose_callback;
+    ctx->onopen = libwebsock_default_onopen_callback;
+    ctx->control_callback = libwebsock_default_control_callback;
+    ctx->onmessage = libwebsock_default_onmessage_callback;
+    
 #ifdef _WIN32
-  WSADATA WSAData;
-  WSAStartup(0x101, &WSAData);
+    WSADATA WSAData;
+    WSAStartup(0x01, &WSAData);
 #endif
-
-
-  return ctx;
+    
+    return ctx;
 }
+
 
 

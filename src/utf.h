@@ -1,6 +1,7 @@
 /*
  * This file is part of libwebsock
  *
+ * Copyright (C) 2014-2015 Jonathan Hall <jhall@futuresouth.us>
  * Copyright (C) 2012-2013 Payden Sutherland
  *
  * libwebsock is free software; you can redistribute it and/or modify

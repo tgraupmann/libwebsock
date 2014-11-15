@@ -1,6 +1,7 @@
 /*
  * This file is part of libwebsock
  *
+ * Copyright (C) 2014-2015 Jonathan Hall <jhall@futuresouth.us>
  * Copyright (C) 2012-2013 Payden Sutherland
  *
  * libwebsock is free software; you can redistribute it and/or modify
@@ -108,7 +109,7 @@ typedef struct _libwebsock_context {
         int running;
         int ssl_init;
         int flags;
-        int owns_base;
+        int owns_base; // for integration with specified libevent base
         struct event_base *base;
         int (*onmessage)(libwebsock_client_state *, libwebsock_message *);
         int (*control_callback)(libwebsock_client_state *, libwebsock_frame *);
