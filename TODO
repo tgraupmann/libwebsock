@@ -5,4 +5,4 @@ so libwebsock ends up not getting linked to properly. This problem appears to be
 
 > Build libevent integration to allow user to specify their own event base for easier integration.
 
-> Build streaming functionalities and non-fragmented data streams functions. (video / voice streaming?)
+> Build streaming functionalities and fragmented data streams functions. (video / voice streaming?)
