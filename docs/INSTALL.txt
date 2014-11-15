@@ -24,9 +24,10 @@ Once done with that, run the following:
 
 ldconfig -v && ldconfig -p | grep websock
 
-You should now see libwebsock showing up, and you’re good to go for the installation. I’ll work on correcting this first to remove the need for the CFLAGS on configure as well as the path issue in regards to ldconfig. 
+You should now see libwebsock showing up, and you’re good to go for the installation. I’ll work on correcting this first to remove
+the need for the CFLAGS on configure as well as the path issue in regards to ldconfig.
 
 To use the library you must link against libwebsock. If you wish to use ssl, you must also link against ssl.  For example,
-to compile the test.c program in the root.
+to compile the test.c program in the examples directory with SSL:
 
 gcc test.c -o test -lwebsock -lssl
