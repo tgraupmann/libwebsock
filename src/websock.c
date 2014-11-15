@@ -440,6 +440,7 @@ int libwebsock_send_fragment(libwebsock_client_state *state, const char *data,
 
 	return evbuffer_add_reference(output, frame, frame_size,
 			libwebsock_send_cleanup, NULL);
+    // TODO: Free frame!
 }
 
 void libwebsock_handle_accept(evutil_socket_t listener, short event, void *arg) {

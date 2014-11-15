@@ -81,6 +81,7 @@
 #define MASK_LENGTH 4
 
 #define WS_FRAGMENT_FIN (1 << 7)
+#define WS_FRAGMENT_NOFIN (0 << 7)
 
 #define WS_NONBLOCK 0x02
 
