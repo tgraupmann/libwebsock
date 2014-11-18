@@ -76,7 +76,7 @@
 
 
 #define PORT_STRLEN 12
-#define LISTEN_BACKLOG 10
+#define LISTEN_BACKLOG 10 // Listen backlog for the socket connections
 #define FRAME_CHUNK_LENGTH 1024
 #define MASK_LENGTH 4
 

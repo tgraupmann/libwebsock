@@ -86,10 +86,14 @@ static inline int libwebsock_read_header(libwebsock_frame *frame) {
             for (i = 0; i < MASK_LENGTH; i++) {
                 frame->mask[i] = *(frame->rawdata + frame->mask_offset + i) & 0xff;
             }
+            // TODO: reported by s0beit
+            // Potential DoS against memory realloc
             frame->state = sw_loaded_mask;
             frame->size = frame->payload_offset + frame->payload_len;
             if (frame->size > frame->rawdata_sz) {
-                new_size = frame->size;
+                /*
+                //new_size = frame->size;
+                new_size = frame->rawdata_sz;
                 new_size--;
                 new_size |= new_size >> 1;
                 new_size |= new_size >> 2;
@@ -97,8 +101,12 @@ static inline int libwebsock_read_header(libwebsock_frame *frame) {
                 new_size |= new_size >> 8;
                 new_size |= new_size >> 16;
                 new_size++;
-                frame->rawdata_sz = new_size;
-                frame->rawdata = (char *) lws_realloc(frame->rawdata, new_size);
+                //frame->rawdata_sz = new_size;
+                frame->size = new_size;
+                //frame->rawdata = (char *) lws_realloc(frame->rawdata, new_size); */
+                printf("Expected frame to be %i bytes, but is only %i bytes. Setting size to rawdata_sz(%i)\n",frame->size,frame->rawdata_sz,frame->rawdata_sz);
+                //frame->size = frame->rawdata_sz;
+                libwebsock_fail_connection(state, WS_CLOSE_PROTOCOL_ERROR); // Doesn't adhere to RFC, drop 'em.
             }
             return 1;
         case sw_loaded_mask:
@@ -344,6 +352,7 @@ void libwebsock_post_shutdown_cleanup(evutil_socket_t fd, short what, void *arg)
 	lws_free(state);
 }
 
+// TODO: What is this all about?
 void libwebsock_handle_send(struct bufferevent *bev, void *arg) {
 }
 
@@ -456,7 +465,7 @@ void libwebsock_handle_accept(evutil_socket_t listener, short event, void *arg) 
 	}
     
 	client_state = (libwebsock_client_state *) lws_calloc(
-                                                          sizeof(libwebsock_client_state));
+                                                          sizeof(libwebsock_client_state)); // TODO: Make sure we free()
 	client_state->sockfd = fd;
 	client_state->flags |= STATE_CONNECTING;
 	client_state->control_callback = ctx->control_callback;
@@ -465,7 +474,7 @@ void libwebsock_handle_accept(evutil_socket_t listener, short event, void *arg) 
 	client_state->onclose = ctx->onclose;
 	client_state->onpong = ctx->onpong;
 	client_state->sa = (struct sockaddr_storage *) lws_malloc(
-                                                              sizeof(struct sockaddr_storage));
+                                                              sizeof(struct sockaddr_storage)); // TODO: Make sure we free()
 	client_state->ctx = (void *) ctx;
 	memcpy(client_state->sa, &ss, sizeof(struct sockaddr_storage));
 	evutil_make_socket_nonblocking(fd);
@@ -792,7 +801,7 @@ void libwebsock_handshake_finish(struct bufferevent *bev,
     
 	output = bufferevent_get_output(bev);
     
-	headers = (char *) lws_calloc(str->data_sz + 1);
+	headers = (char *) lws_calloc(str->data_sz + 1); // TODO: Make sure we free()
 	strncpy(headers, str->data, str->idx);
 	for (tok = strtok(headers, "\r\n"); tok != NULL; tok = strtok(NULL, "\r\n")) {
 		if (strstr(tok, "Sec-WebSocket-Key: ") != NULL) {
@@ -885,10 +894,10 @@ void libwebsock_handshake(struct bufferevent *bev, void *ptr) {
 	input = bufferevent_get_input(bev);
 	str = state->data;
 	if (!str) {
-		state->data = (libwebsock_string *) lws_calloc(sizeof(libwebsock_string));
+		state->data = (libwebsock_string *) lws_calloc(sizeof(libwebsock_string)); // TODO: Make sure we free()
 		str = state->data;
 		str->data_sz = FRAME_CHUNK_LENGTH;
-		str->data = (char *) lws_calloc(str->data_sz);
+		str->data = (char *) lws_calloc(str->data_sz); // TODO: Make sure we free()
 	}
     
 	while (evbuffer_get_length(input)) {

@@ -28,5 +28,4 @@ int libwebsock_default_onopen_callback(libwebsock_client_state *state);
 int libwebsock_default_onmessage_callback(libwebsock_client_state *state, libwebsock_message *msg);
 int libwebsock_default_control_callback(libwebsock_client_state *state, libwebsock_frame *ctl_frame);
 
-
 #endif /* DEFAULT_CALLBACKS_H_ */

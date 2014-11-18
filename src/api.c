@@ -74,6 +74,7 @@ libwebsock_close(libwebsock_client_state *state)
 int
 libwebsock_close_with_reason(libwebsock_client_state *state, unsigned short code, const char *reason)
 {
+    // TODO: Possible buffer overflow here...
     unsigned int len;
     unsigned short code_be;
     int ret;

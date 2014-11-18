@@ -1,22 +1,38 @@
 !-----------------------------------------------------------------------------------------------------------------!
 
+>2014-11-16  Jonathan Hall   <jhall@futuresouth.us>
+
+ &  problem fixes
+
+ - Corrected a potential DoS vulnerability reported by s0beit (s0beit@myg0t.com) (http://s0beit.me/) in winsock.c
+ (libwebsock_read_header)
+
+ * winsock.c (libwebsock_read_header): Modified to make it trust and use the raw length of the header as the size
+ if the reported size is smaller than the actual size. This is to correct a potential DoS attack resulting in an
+ attacker submitting arbitrarily crafted packets to consume server memory.
+
+>_END_ 2014-11-16 J. Hall
+
+!-----------------------------------------------------------------------------------------------------------------!
+
 >2014-11-15  Jonathan Hall   <jhall@futuresouth.us>
 
  & libwebsock 1.0.8
 
  - The changes made in this revision are addressing code cleanup and logic flow. libwebsock will no longer be
- - initiated with a seperate function to specify flags to be passed on to libevent. The goal is to develop more
- - control of the framing protocol and the data frames, allowing for the possibility of actually streaming content
- - through the websocket for example, while also allowing the library to be easily integrated in to existing code
- - that is already using libevent.
- -
- - Currently, libwebsock only supports the sending of unfragmented messages that already have the FIN bit set. The
- - goal is to allow actual streaming through the socket and to not set the FIN bit until the stream is completed.
- - A good use-case for this would be video or audio streaming and multiplexing.
- -
+ initiated with a seperate function to specify flags to be passed on to libevent.
+
+ - The goal is to develop more control of the framing protocol and the data frames, allowing for the possibility
+ of actually streaming content through the websocket for example, while also allowing the library to be easily
+ integrated in to existing code that is already using libevent.
+
+ -Currently, libwebsock only supports the sending of unfragmented messages that already have the FIN bit set. The
+ goal is to allow actual streaming through the socket and to not set the FIN bit until the stream is completed.
+ A good use-case for this would be video or audio streaming and multiplexing.
+
  - The version and revision have been changed. libwebsocket 1.0 provided very basic functionality, as does the
- - current version. Version 2.0 will have a lot of advancements and features making it significantly more powerful,
- - yet still extremely simple to implement. 
+ current version. Version 2.0 will have a lot of advancements and features making it significantly more powerful,
+ yet still extremely simple to implement.
 
  * API: libwebsock is now initialized with two arguments: an optional event base and optional flags. Either
  may be set to NULL. When set to NULL, libwebsock will use its own libevent base and will default to fragmented
@@ -46,11 +62,12 @@
 
 >2013 Payden Kyle Sutherland <Deceased, 12/03/1986 - 11/24/2014>
 
- - Initial base development and conceptual design may be found at https://github.com/payden/libwebsock
+ - Initial base development and conceptual design. May be found at https://github.com/payden/libwebsock
 
 >_END_ 2013 P. Sutherland
 
 !-----------------------------------------------------------------------------------------------------------------!
+
                                 Copyright 2014, 2015 Free Software Foundation, Inc.
                         Copying and distribution of this file, with or without modification, are
                         permitted provided the copyright notice and this notice are preserved.

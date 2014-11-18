@@ -8,5 +8,6 @@
 #define WEBSOCK_HAVE_SSL 1
 
 //#define LIBWEBSOCK_DEBUG 1 // Uncomment to enable debugging
+//#define LIBWEBSOCK_DEBUG_LOG "debug.log"
 
 #endif
