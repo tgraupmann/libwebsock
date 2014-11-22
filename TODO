@@ -6,3 +6,5 @@ so libwebsock ends up not getting linked to properly. This problem appears to be
 > Build libevent integration to allow user to specify their own event base for easier integration.
 
 > Build streaming functionalities and fragmented data streams functions. (video / voice streaming?)
+
+> Allow option for setting max frame payload length to be accepted (i.e. correct overflow in libwebsock_handle_recv)

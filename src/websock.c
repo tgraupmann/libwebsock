@@ -86,14 +86,10 @@ static inline int libwebsock_read_header(libwebsock_frame *frame) {
             for (i = 0; i < MASK_LENGTH; i++) {
                 frame->mask[i] = *(frame->rawdata + frame->mask_offset + i) & 0xff;
             }
-            // TODO: reported by s0beit
-            // Potential DoS against memory realloc
             frame->state = sw_loaded_mask;
             frame->size = frame->payload_offset + frame->payload_len;
             if (frame->size > frame->rawdata_sz) {
-                /*
-                //new_size = frame->size;
-                new_size = frame->rawdata_sz;
+                new_size = frame->size;
                 new_size--;
                 new_size |= new_size >> 1;
                 new_size |= new_size >> 2;
@@ -101,12 +97,8 @@ static inline int libwebsock_read_header(libwebsock_frame *frame) {
                 new_size |= new_size >> 8;
                 new_size |= new_size >> 16;
                 new_size++;
-                //frame->rawdata_sz = new_size;
-                frame->size = new_size;
-                //frame->rawdata = (char *) lws_realloc(frame->rawdata, new_size); */
-                printf("Expected frame to be %i bytes, but is only %i bytes. Setting size to rawdata_sz(%i)\n",frame->size,frame->rawdata_sz,frame->rawdata_sz);
-                //frame->size = frame->rawdata_sz;
-                libwebsock_fail_connection(state, WS_CLOSE_PROTOCOL_ERROR); // Doesn't adhere to RFC, drop 'em.
+                frame->rawdata_sz = new_size;
+                frame->rawdata = (char *) lws_realloc(frame->rawdata, new_size);
             }
             return 1;
         case sw_loaded_mask:
@@ -609,7 +601,7 @@ void libwebsock_handle_recv(struct bufferevent *bev, void *ptr) {
             
 			frame_fn(state);
 		}
-	}
+    }
 	evbuffer_drain(input, consumed);
 }
 

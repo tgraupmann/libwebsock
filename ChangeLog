@@ -4,12 +4,9 @@
 
  &  problem fixes
 
- - Corrected a potential DoS vulnerability reported by s0beit (s0beit@myg0t.com) (http://s0beit.me/) in winsock.c
- (libwebsock_read_header)
+ - Corrected a potential DoS vulnerability.
 
- * winsock.c (libwebsock_read_header): Modified to make it trust and use the raw length of the header as the size
- if the reported size is smaller than the actual size. This is to correct a potential DoS attack resulting in an
- attacker submitting arbitrarily crafted packets to consume server memory.
+
 
 >_END_ 2014-11-16 J. Hall
 
