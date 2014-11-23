@@ -86,7 +86,7 @@ static inline int libwebsock_read_header(libwebsock_frame *frame, libwebsock_cli
             for (i = 0; i < MASK_LENGTH; i++) {
                 frame->mask[i] = *(frame->rawdata + frame->mask_offset + i) & 0xff;
             }
-            frame->state = sw_loaded_mask;
+//            frame->state = sw_loaded_mask;
             frame->size = frame->payload_offset + frame->payload_len;
             // Check to see if we've allocated enough space for the payload data
             // of the frame. If not, allocate it. Also check to ensure it does not
@@ -94,10 +94,25 @@ static inline int libwebsock_read_header(libwebsock_frame *frame, libwebsock_cli
             if(frame_state->max_frame_payload_size != 0 && frame->size > frame_state->max_frame_payload_size + 8) {
                 // Size is larger than maximum allowed payload
 #ifdef LIBWEBSOCK_DEBUG
-                fprintf(stderr, "Frame received is larger than allowed payload size...\n", __func__, key);
+                fprintf(stderr, "Frame received is larger than allowed payload size... Killing connection and cleaning up.\n", __func__, key);
 #endif
-                // TODO: Hit onframetoolarge callback...
+                // TODO: Clean up memory after this... (free it ALLLLL)
                 libwebsock_fail_connection(frame_state, WS_CLOSE_PROTOCOL_ERROR);
+
+                if(frame_state->onframetoolarge != NULL) {
+                    frame->state = sw_discard_frame;
+                    libwebsock_onframetoolarge_wrapper *wrapper =  (libwebsock_onframetoolarge_wrapper *) lws_malloc(sizeof(libwebsock_onframetoolarge_wrapper));
+                    pthread_t *tptr = lws_malloc(sizeof(pthread_t));
+                    int ret;
+                    wrapper->state = frame_state;
+                    wrapper->frame = frame;
+                    ret = pthread_create(tptr, NULL, libwebsock_pthread_onframetoolarge, (void *) wrapper);
+                    assert(ret == 0);
+                    libwebsock_insert_into_thread_list(frame_state, tptr, th_onframetoolarge);
+                } else {
+                    frame->state = sw_discard_frame;
+                }
+
             }
             
             if (frame->size > frame->rawdata_sz) {
@@ -112,9 +127,15 @@ static inline int libwebsock_read_header(libwebsock_frame *frame, libwebsock_cli
                 frame->rawdata_sz = new_size;
                 frame->rawdata = (char *) lws_realloc(frame->rawdata, new_size);
             }
-            return 1;
+            frame->state = sw_loaded_mask;
+            return 0;
+        
         case sw_loaded_mask:
             return 1;
+            
+        case sw_discard_frame:
+            printf("Discarding frame...\n");
+            return 0;
 	}
 	return 0;
 }
@@ -721,7 +742,22 @@ void libwebsock_dispatch_message(libwebsock_client_state *state) {
 	}
 }
 
-
+void *
+libwebsock_pthread_onframetoolarge(void *arg) {
+    libwebsock_onframetoolarge_wrapper *wrapper = arg;
+    libwebsock_client_state *state = wrapper->state;
+    libwebsock_frame *frame = wrapper->frame;
+    state->onframetoolarge(state,frame);
+    raise(SIGUSR2);
+    struct timeval tv = { 0, 20000 };
+    struct event *ev;
+    libwebsock_context *ctx = (libwebsock_context *) wrapper->state->ctx;
+    thread_state_wrapper *twrapper = (thread_state_wrapper *) lws_malloc(sizeof(thread_state_wrapper));
+    twrapper->state = wrapper->state;
+    twrapper->thread = pthread_self();
+    ev = event_new(ctx->base, -1, 0, libwebsock_cleanup_thread_list, (void *) twrapper);
+    event_add(ev,&tv);
+}
 
 void *
 libwebsock_pthread_onmessage(void *arg) {

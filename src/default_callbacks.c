@@ -24,7 +24,7 @@
 #include "websock.h"
 
 int libwebsock_default_onframetoolarge_callback(libwebsock_client_state *state, libwebsock_frame *frame) {
-    fprintf(stderr, "Received a frame that was larger than maximum allowed size.\nConnection closed.\n");
+    fprintf(stderr, "Received a frame that was larger than maximum allowed size. Connection closed.\n");
     return 0;
 }
 

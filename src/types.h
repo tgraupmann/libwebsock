@@ -26,13 +26,15 @@ enum WS_FRAME_STATE {
         sw_got_two,
         sw_got_short_len,
         sw_got_full_len,
-        sw_loaded_mask
+        sw_loaded_mask,
+        sw_discard_frame
 };
 
 enum WS_THREAD_TYPE {
 	th_onmessage = 0,
 	th_onclose = 1,
-	th_onopen = 2
+	th_onopen = 2,
+    th_onframetoolarge = 3
 };
 
 typedef struct _libwebsock_frame {
@@ -124,6 +126,11 @@ typedef struct _libwebsock_context {
         void *user_data; //context specific user data
         unsigned int max_frame_payload_size;
 } libwebsock_context;
+
+typedef struct _libwebsock_onframetoolarge_wrapper {
+    libwebsock_client_state *state;
+    libwebsock_frame *frame;
+} libwebsock_onframetoolarge_wrapper;
 
 typedef struct _libwebsock_onmessage_wrapper {
   libwebsock_client_state *state;

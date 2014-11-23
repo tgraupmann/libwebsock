@@ -147,6 +147,7 @@ void libwebsock_handshake(struct bufferevent *bev, void *ptr);
 void *libwebsock_pthread_onmessage(void *arg);
 void *libwebsock_pthread_onclose(void *arg);
 void *libwebsock_pthread_onopen(void *arg);
+void *libwebsock_pthread_onframetoolarge(void *arg);
 void libwebsock_fragmented_add(libwebsock_fragmented *frag, char *buf, unsigned int len);
 void libwebsock_fragmented_finish(libwebsock_fragmented *frag);
 libwebsock_fragmented *libwebsock_fragmented_new(libwebsock_client_state *state);
