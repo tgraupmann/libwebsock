@@ -35,7 +35,7 @@
 #define CC libwebsock_new_continuation_frame
 #define DD libwebsock_fail_and_cleanup
 
-static inline int libwebsock_read_header(libwebsock_frame *frame) {
+static inline int libwebsock_read_header(libwebsock_frame *frame, libwebsock_client_state *frame_state) {
 	int i, new_size;
 	enum WS_FRAME_STATE state;
     
@@ -88,6 +88,18 @@ static inline int libwebsock_read_header(libwebsock_frame *frame) {
             }
             frame->state = sw_loaded_mask;
             frame->size = frame->payload_offset + frame->payload_len;
+            // Check to see if we've allocated enough space for the payload data
+            // of the frame. If not, allocate it. Also check to ensure it does not
+            // exceed the maximum size allowed at initialization time.
+            if(frame_state->max_frame_payload_size != 0 && frame->size > frame_state->max_frame_payload_size + 8) {
+                // Size is larger than maximum allowed payload
+#ifdef LIBWEBSOCK_DEBUG
+                fprintf(stderr, "Frame received is larger than allowed payload size...\n", __func__, key);
+#endif
+                // TODO: Hit onframetoolarge callback...
+                libwebsock_fail_connection(frame_state, WS_CLOSE_PROTOCOL_ERROR);
+            }
+            
             if (frame->size > frame->rawdata_sz) {
                 new_size = frame->size;
                 new_size--;
@@ -465,6 +477,8 @@ void libwebsock_handle_accept(evutil_socket_t listener, short event, void *arg) 
 	client_state->onmessage = ctx->onmessage;
 	client_state->onclose = ctx->onclose;
 	client_state->onpong = ctx->onpong;
+    client_state->onframetoolarge = ctx->onframetoolarge;
+    client_state->max_frame_payload_size = ctx->max_frame_payload_size;
 	client_state->sa = (struct sockaddr_storage *) lws_malloc(
                                                               sizeof(struct sockaddr_storage)); // TODO: Make sure we free()
 	client_state->ctx = (void *) ctx;
@@ -557,7 +571,7 @@ void libwebsock_handle_recv(struct bufferevent *bev, void *ptr) {
 			i++;
             
 			if (current->state != sw_loaded_mask) {
-				err = libwebsock_read_header(current);
+				err = libwebsock_read_header(current, state);
 				if (err == -1) {
 					if ((state->flags & STATE_SENT_CLOSE_FRAME) == 0) {
 						libwebsock_fail_connection(state, WS_CLOSE_PROTOCOL_ERROR);

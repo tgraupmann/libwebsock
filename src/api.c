@@ -74,7 +74,6 @@ libwebsock_close(libwebsock_client_state *state)
 int
 libwebsock_close_with_reason(libwebsock_client_state *state, unsigned short code, const char *reason)
 {
-    // TODO: Possible buffer overflow here...
     unsigned int len;
     unsigned short code_be;
     int ret;
@@ -83,7 +82,7 @@ libwebsock_close_with_reason(libwebsock_client_state *state, unsigned short code
     code_be = htobe16(code);
     memcpy(buf, &code_be, 2);
     if (reason) {
-        len += snprintf(buf + 2, 124, "%s", reason);
+        len += snprintf(buf + 2, 124, "%s", reason); // Avoid buffer overflow by safely copying
     }
     int flags = WS_FRAGMENT_FIN | WS_OPCODE_CLOSE;
     ret = libwebsock_send_fragment(state, buf, len, flags);
@@ -149,7 +148,7 @@ void
 libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port)
 {
     struct addrinfo hints, *servinfo, *p;
-    struct event *listener_event;
+    //struct event *listener_event;
     evutil_socket_t sockfd;
     int yes = 1;
     
@@ -210,7 +209,7 @@ libwebsock_bind_socket(libwebsock_context *ctx, evutil_socket_t sockfd)
 }
 
 libwebsock_context *
-libwebsock_init(struct event_base *base, int *flags)
+libwebsock_init(struct event_base *base, int *flags, unsigned int max_payload_size)
 {
     libwebsock_context *ctx;
     //struct event_base *base = libwebsock_make_event_base();
@@ -245,10 +244,13 @@ libwebsock_init(struct event_base *base, int *flags)
         ctx->flags = 0;
     }
     
+    ctx->max_frame_payload_size = max_payload_size;
+    
     ctx->onclose = libwebsock_default_onclose_callback;
     ctx->onopen = libwebsock_default_onopen_callback;
     ctx->control_callback = libwebsock_default_control_callback;
     ctx->onmessage = libwebsock_default_onmessage_callback;
+    ctx->onframetoolarge = libwebsock_default_onframetoolarge_callback;
     
 #ifdef _WIN32
     WSADATA WSAData;

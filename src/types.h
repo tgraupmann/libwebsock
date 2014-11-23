@@ -45,6 +45,7 @@ typedef struct _libwebsock_frame {
         unsigned int size;
         unsigned int payload_len_short;
         unsigned int payload_len;
+        unsigned int *max_payload_size;
         char *rawdata;
         struct _libwebsock_frame *next_frame;
         struct _libwebsock_frame *prev_frame;
@@ -91,6 +92,8 @@ typedef struct _libwebsock_client_state {
         int (*onopen)(struct _libwebsock_client_state *);
         int (*onclose)(struct _libwebsock_client_state *);
         int (*onpong)(struct _libwebsock_client_state *);
+        int (*onframetoolarge)(struct _libwebsock_client_state *, libwebsock_frame *);
+        unsigned int max_frame_payload_size;
 #ifdef WEBSOCK_HAVE_SSL
         SSL *ssl;
 #endif
@@ -116,8 +119,10 @@ typedef struct _libwebsock_context {
         int (*onopen)(libwebsock_client_state *);
         int (*onclose)(libwebsock_client_state *);
         int (*onpong)(libwebsock_client_state *);
+        int (*onframetoolarge)(libwebsock_client_state *, libwebsock_frame *);
         libwebsock_client_state *clients_HEAD;
         void *user_data; //context specific user data
+        unsigned int max_frame_payload_size;
 } libwebsock_context;
 
 typedef struct _libwebsock_onmessage_wrapper {

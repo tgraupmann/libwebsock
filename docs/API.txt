@@ -1,171 +1,56 @@
 libwebsock API Documentation
 
-These docs are hastily thrown together as a temporary help to any who might
-use this library.
+Getting Started With libwebsock API
 
-First, I will go over a very basic echo server using libwebsock.  The echo
-server simply accepts WebSocket clients and replies to any text messages
-sent by the client with the exact same message that was sent.
+1) Including in your project
 
-After installing the library (covered in INSTALL.txt), we must make sure to
-include <websock/websock.h> in our server program.
+To use libwebsock, you must include the websock/websock.h header file in your project and compile your code against the websock library.  (-lwebsock)
 
-The most minimalistic echo server follows:
+2) libwebsock Initialization
 
-int main(int argc, char **argv) {
-	libwebsock_context *ctx = NULL;
-	ctx = libwebsock_init(NULL,NULL);
-	if(ctx == NULL) {
-		fprintf(stderr, "Error during libwebsock_init.\n");
-		exit(1);
-	}
-	libwebsock_bind(ctx, "0.0.0.0", "8080");
-	libwebsock_wait(ctx);
-}
+In your project, you must first set a context for use with libwebsock and then initialize it. Initialization currently takes three parameters: The libevent base, the flags to be passed to libevent and the maximum size allowed for a frames payload data.
 
-First we define a pointer to a libwebsock_context named 'ctx'.
-libwebsock_init allocates memory for the actual structure and sets
-up a basic context with some default callbacks.  We check for NULL,
-to see if libwebsock_init failed or not.  Then, we must tell libwebsock
-to bind itself to a certain IP address and port.  If your server has
-only one IP address or you want to listen on all IP addresses, just
-use "0.0.0.0" for the address.  In this instance, I've used "8080"
-as the port number.  Finally, we call libwebsock_wait supplying the context
-as a parameter and libwebsock will take over from there.  libwebsock uses 
-epoll to monitor sockets and perform it's work when data is available
-to be read or written.  
+Currently, the first two parameters are not in use and are reserved for future implementation of allowing you to tie it in to existing libevent implementations. As such, the following is an example of initialization allowing a maximum frame payload size of 1,024 bytes:
 
-The above isn't very useful if you'd like to actually like to do something
-useful with your WebSocket server.  In order to allow the programmer some
-flexibility, libwebsock allows you to set callbacks to be executed when
-certain events occur.  For example, you might receive a WebSocket message
-from one of your connected clients or you might like to perform some work
-each time a new client connects.  You can look at the simple tic-tac-toe
-game in the 'ttt' folder of the source for an example of how one might
-go about using the library.  I warn you not to use the code therein directly
-as it's fraught with incomplete error checking and was intended only as
-an example.
+libwebsock_context *ctx = libwebsock_init(NULL,NULL,1024);
 
-Let's take a look at the receive callback prototype and how to register a new
-one.  The prototype for the receive callback follows:
+3) libwebsock Callback Registration
 
-int some_callback_name(libwebsock_client_state *state, libwebsock_message *msg);
+Once libwebsock is initialized, we must define the callbacks used to interact with libwebsock. The current default callbacks simply print data out on connects, disconnects and messages received. The default action for frames that are too large is to just close the socket with an error and not notify the other end. You’re obviously going to want to interact with your websocket sessions, so we have a few callbacks we can register here.
 
-So the function you define will accept a pointer to a libwebsock_client_state
-and a pointer to libwebsock_message.  When a new message is received by
-libwebsock, it generates these structures in memory and will then call
-the registered callback supplying them as arguments.
+onopen – Called every time a connection is established.  Arguments, in order, are:
+libwebsock_client_state *
 
-Useful fields in libwebsock_client_state are int sockfd and void *data.  sockfd is the
-socket descriptor for this connection which is useful if you want to send a
-message back to this client using one of the API calls.  libwebsock_message
-has an unsigned int opcode which contains the opcode for the message.  The
-opcode is usually 1 (which means it's a text message and not binary).  It
-also has an unsigned long long payload_len and char *payload.  payload_len
-tells you how much data was actually received and payload contains the
-message received from the client as a character array.  So, let's look at the
-default receive callback which just echoes the received message.
+onclose – Called every time a connection is closed. Arguments, in order, are:
+libwebsock_client_state *
 
-int libwebsock_default_receive_callback(libwebsock_client_state *state, libwebsock_message *msg) {
-	libwebsock_send_text(state, msg->payload);
-	return 0;
-}
+onmessage – Called every time a message is received. Arguments, in order, are:
+libwebsock_client_state *
+libwebsock_message *
 
-This callback is taken straight out of default_callbacks.c and is what gets
-registered in libwebsock_init().  It simply calls libwebsock_send_text with
-the libwebsock_client_state structure of the client to send the message to and the character
-array of the message to send.
+onframetoolarge – Called every time a frames payload size exceeds the size specified at initialization. Arguments, in order, are:
+libwebsock_client_state *
+libwebsock_frame *
 
-If you define your own receive callback named my_receive_callback.  
-You would then have to tell libwebsock about it before calling 
-libwebsock_wait().  You would do so by setting the context's
-onmessage pointer, like so:
+You can register your own callback functions by assigning them in the context. Make sure your functions can take the arguments passed on as specified for each. An example of registering your own callbacks is as follows:
 
-libwebsock_context *ctx = libwebsock_init(NULL,NULL);
-ctx->onmessage = &my_receive_callback; //&my_receive_callback points to your callback function
-libwebsock_bind(ctx, "0.0.0.0", "8080");
+ctx->onopen = your_onopen_function;
+ctx->opnclose = your_onclose_fuction;
+ctx->onmessahe = your_onmessage_function;
+ctx->onframetoolarge = your_onframetoolarge_function;
+
+4) Binding libwebsocket To A Socket (non-SSL)
+
+There are currently two ways libwebsock can handle the incoming socket connections. First, libwebsock is capable of handling all socket connections for you, and does a fairly decent job at doing so. The sockets are non-blocking and threaded per a connection. On top of the threading per a connection, each event triggered is also threaded off per an event. This is used by using the libwebsock_bind() function.
+
+Second, you can code your own socket handling and libevent handling, and just bind to your specified evutil_socket_t socket file descriptor with libwebsock_bind_socket() . This function takes the context as the first parameter (ctx) and the socketfd as the second.
+
+The easiest and most convenient way to use libwebsock is to allow it to handle the sockets for you. Currently, libwebsock_bind() takes three arguments: The libwebsock context, the default IP address to bind to (0.0.0.0 for all) and the port to listen on. For example, to bind libwebsock to all IP’s and tcp port 1234, we would do the following:
+
+libwebsock_bind(ctx, “0.0.0.0”, “1234”);
+
+5) Start Listening for Connections
+
+Once libwebsock is initialized, the callbacks are registered and the socketfd is set and bound, we can begin listening for incoming connections. To do this, we call the libwebsock_wait() function with the context as the argument:
+
 libwebsock_wait(ctx);
-
-There are a couple of other callbacks which are useful:
-
-The connect callback which gets fired every time a new client connects.
-
-int some_connect_cb(libwebsock_client_state *state) {
-	fprintf(stderr, "New connection with socket descriptor: %d\n", state->sockfd);
-	return 0;
-}
-
-ctx->onopen = &some_connect_cb;
-
-The close callback which gets fired when a connected client closes the
-connection.
-
-int some_close_cb(libwebsock_client_state *state) {
-	fprintf(stderr, "Client closed connection: %d\n",state->sockfd);
-	return 0;
-}
-
-ctx->onclose = &some_close_cb;
-
-There is also a control callback which deals with handling control frames,
-but that can get a little dicey and you'd probably want to study the source
-code and RFC 6455 before tackling that one.  The default control callback
-just responds to close frames in the appropriate manner and you can view
-it in default_callbacks.c.
-
-Okay, now the rest of this is only going to be technical information about
-the functions exported by the library that can be used by your program.
-
-void libwebsock_dump_frame(libwebsock_frame *frame);
-Dumps information about the supplied libwebsock_frame to stderr.
-
-int libwebsock_send_binary(libwebsock_client_state *state, char *in_data, unsigned long long datalen);
-Sends a binary type message to socket descriptor sockfd of length datalen with data being in_data.
-
-int libwebsock_send_text(libwebsock_client_state *state, char *strdata);
-Sends a text type message to socket descriptor sockfd with text from strdata.
-
-void libwebsock_wait(libwebsock_context *ctx);
-Endless loop function that uses epoll to handle incoming data and process it
-appropriately.  This function is called last and is what makes libwebsock
-tick.
-
-void libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port);
-This function is called prior to libwebsock_wait and binds a listening
-socket to the supplied ip address and port.  It also adds this socket to
-the list of sockets that will be monitored by epoll in libwebsock_wait.
-
-void libwebsock_bind_socket(libwebsock_context *ctx, evutil_socket_t
-sockfd)
-Use an already created, listening socket (Or other type of file
-descriptor) for incoming websocket requests.
-
-void libwebsock_bind_ssl(libwebsock_context *ctx, char *listen_host,
-			  char *port, char *keyfile, char *certfile);
-This function is called prior to libwebsock_wait and binds a listening
-socket to the supplied ip address and port.  It also adds this socket
-to the list of sockets that will be monitored by epoll in libwebsock_wait.
-This function also flags the listener as SSL enabled and only SSL
-clients should connect to this port.
-
-void libwebsock_bind_ssl_real(libwebsock_context *ctx,
-			  char *listen_host, char *port, char *keyfile,
-			  char *certfile, char *chainfile);
-This is the real function behind libwebsock_bind_ssl.  This function
-accepts the same parameters plus chainfile for certificate bundles.
-libwebsock_bind_ssl simply calls libwebsock_bind_ssl_real with
-chainfile set to NULL.
-
-libwebsock_context *libwebsock_init(struct event_base *base, int *flags);
-This functions allocates memory for a libwebsock_context and initializes
-it with some defaults.  It registers the default callbacks to be associated
-with the specified context and flags. For now, the only support is for the
-flags. The event base portion is still under development, and should always
-be NULL until further notice. The flags are passed to libevent_base_loop via
-libwebsock_wait().
-
-libwebsock_context *libwebsock_init_base(struct event_base *base, int
-flags)
-This function creates a new libwebsock_context, using the provided
-libevent event_base for handling all connections. The flags argument
-is passed to libevent_base_loop() by libwebsock_wait(). 

@@ -42,7 +42,7 @@ main(int argc, char *argv[])
     exit(0);
   }
 
-  ctx = libwebsock_init(NULL,NULL);
+  ctx = libwebsock_init(NULL,NULL,1024);
   if (ctx == NULL ) {
     fprintf(stderr, "Error during libwebsock_init.\n");
     exit(1);

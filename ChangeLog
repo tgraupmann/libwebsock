@@ -1,14 +1,21 @@
 !-----------------------------------------------------------------------------------------------------------------!
 
->2014-11-16  Jonathan Hall   <jhall@futuresouth.us>
+>2014-11-22  Jonathan Hall   <jhall@futuresouth.us>
 
  &  problem fixes
 
  - Corrected a potential DoS vulnerability.
 
+ - Added initialization feature to set the maximum size of a frames payload. libwebsock_init is now called like:
+ libwebsock_init(*ev_base, *flags, max_payload_length) . The max payload length is specified in bytes. So to set
+ a maximum payload size of 1kb per a frame, you would specify this as 1000. An example of a libwebsock_init is:
+ libwebsock_init(NULL,NULL,1000) . You can set the maximum size to 0 bytes to have no maximum size per payload.
 
+ - Added an event to handle frames that exceed the maximum length specified at initialization. The default action
+ is to just simply drop the socket connection. You can specify your own callback for this event by assigning
+ ctx->onframetoolarge = your_onframetoolarge_callback .
 
->_END_ 2014-11-16 J. Hall
+>_END_ 2014-11-22 J. Hall
 
 !-----------------------------------------------------------------------------------------------------------------!
 
