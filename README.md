@@ -30,7 +30,6 @@ below.
 Coming Soon:
 
 * Ability to tie in to existing libevent bases
-* Ability to send fragmented messages
 * Streaming functionality (for video, audio and file transfers)
 
 This is a continuation of Payden Kyle Sutherlands original libwebsocket implementation.

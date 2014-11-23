@@ -2,7 +2,7 @@
 
 >2014-11-22  Jonathan Hall   <jhall@futuresouth.us>
 
- &  problem fixes
+ &  Version change, problem fixes and feature addition
 
  - Corrected a potential DoS vulnerability.
 
@@ -66,7 +66,7 @@
 
 >2013 Payden Kyle Sutherland <Deceased, 12/03/1986 - 11/24/2014>
 
- - Initial base development and conceptual design. May be found at https://github.com/payden/libwebsock
+ - Initial base development and conceptual design.
 
 >_END_ 2013 P. Sutherland
 

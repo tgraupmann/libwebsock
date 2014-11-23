@@ -114,7 +114,7 @@ typedef struct _libwebsock_context {
         int running;
         int ssl_init;
         int flags;
-        int owns_base; // for integration with specified libevent base
+        int owns_base;
         struct event_base *base;
         int (*onmessage)(libwebsock_client_state *, libwebsock_message *);
         int (*control_callback)(libwebsock_client_state *, libwebsock_frame *);
@@ -123,7 +123,7 @@ typedef struct _libwebsock_context {
         int (*onpong)(libwebsock_client_state *);
         int (*onframetoolarge)(libwebsock_client_state *, libwebsock_frame *);
         libwebsock_client_state *clients_HEAD;
-        void *user_data; //context specific user data
+        void *user_data;
         unsigned int max_frame_payload_size;
 } libwebsock_context;
 

@@ -1,56 +1,263 @@
-libwebsock API Documentation
+<h1>libwebsock Documentation</h1>
 
-Getting Started With libwebsock API
+[TOC]
 
-1) Including in your project
+# Welcome To libwebsock!
+libwebsock is an easy to use and very powerful C websocket library. It's built to focus on handling every aspect of a websocket, including the socket connections, so the user can focus on their core application logic instead of worrying about sockets and threading logic.
 
-To use libwebsock, you must include the websock/websock.h header file in your project and compile your code against the websock library.  (-lwebsock)
+libwebsock is built off of libevent and uses POSIX threads to deliver a fast and reliable library for working with the websocket protocol. Currently, it is fully RFC6455 compliant and passes the Autobahn Test Suite!
+<br>
 
-2) libwebsock Initialization
+## Installing libwebsock
+Right now, installing libwebsock takes a few steps. I have not taken the time to straighten out the autogen and Makefile yet. However, it's not terribly difficult. First, download the source code:
 
-In your project, you must first set a context for use with libwebsock and then initialize it. Initialization currently takes three parameters: The libevent base, the flags to be passed to libevent and the maximum size allowed for a frames payload data.
+    git clone git://git.code.sf.net/p/libwebsock/code libwebsock-code
 
-Currently, the first two parameters are not in use and are reserved for future implementation of allowing you to tie it in to existing libevent implementations. As such, the following is an example of initialization allowing a maximum frame payload size of 1,024 bytes:
+Once this is done, run autogen, make, make install and ldconfig:
 
-libwebsock_context *ctx = libwebsock_init(NULL,NULL,1024);
+    ./autogen.sh
+    CFLAGS="-lpthread -levent" ./configure && make && sudo make install
 
-3) libwebsock Callback Registration
+On BSD (and Mac OS), you should be good to go at this point. However, Linux actually requires you include the path where the library installs in your ld.so.conf file in order to link to it appropriately:
 
-Once libwebsock is initialized, we must define the callbacks used to interact with libwebsock. The current default callbacks simply print data out on connects, disconnects and messages received. The default action for frames that are too large is to just close the socket with an error and not notify the other end. You’re obviously going to want to interact with your websocket sessions, so we have a few callbacks we can register here.
+    echo "/usr/local/lib" >>/etc/ld.so.conf
+    echo "/usr/lib" >>/etc/ld.so.conf
+    ldconfig -v
+    ldconfig -p | grep websock
 
-onopen – Called every time a connection is established.  Arguments, in order, are:
-libwebsock_client_state *
+If you see results similar to the ones below, then you're now ready to use libwebsock!
 
-onclose – Called every time a connection is closed. Arguments, in order, are:
-libwebsock_client_state *
+    bash# ldconfig -p | grep libwebsock
+        libwebsock.so.1 (libc6,x86-64) => /usr/local/lib/libwebsock.so.1
+        libwebsock.so (libc6,x86-64) => /usr/local/lib/libwebsock.so
+    bash#
+<br>
 
-onmessage – Called every time a message is received. Arguments, in order, are:
-libwebsock_client_state *
-libwebsock_message *
+## Including libwebsock In Your Project
+Once installed, including libwebsock in your project and compiling against it is really very easy.
 
-onframetoolarge – Called every time a frames payload size exceeds the size specified at initialization. Arguments, in order, are:
-libwebsock_client_state *
-libwebsock_frame *
+    #include <websock/websock.h>
 
-You can register your own callback functions by assigning them in the context. Make sure your functions can take the arguments passed on as specified for each. An example of registering your own callbacks is as follows:
+That's all there is to include it in to your project. Please note that when you compile your application, you will need to link against the libwebsock library:
 
-ctx->onopen = your_onopen_function;
-ctx->opnclose = your_onclose_fuction;
-ctx->onmessahe = your_onmessage_function;
-ctx->onframetoolarge = your_onframetoolarge_function;
+    gcc -O2 -g -o example example.c -lwebsock
+<br>
 
-4) Binding libwebsocket To A Socket (non-SSL)
+## Quick Example Usage
+The following is a simple example to get you up and going:
 
-There are currently two ways libwebsock can handle the incoming socket connections. First, libwebsock is capable of handling all socket connections for you, and does a fairly decent job at doing so. The sockets are non-blocking and threaded per a connection. On top of the threading per a connection, each event triggered is also threaded off per an event. This is used by using the libwebsock_bind() function.
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <websock/websock.h>
 
-Second, you can code your own socket handling and libevent handling, and just bind to your specified evutil_socket_t socket file descriptor with libwebsock_bind_socket() . This function takes the context as the first parameter (ctx) and the socketfd as the second.
+    int ws_connected(libwebsock_client_state *);
+    int ws_msg(libwebsock_client_state *, libwebsock_message *);
 
-The easiest and most convenient way to use libwebsock is to allow it to handle the sockets for you. Currently, libwebsock_bind() takes three arguments: The libwebsock context, the default IP address to bind to (0.0.0.0 for all) and the port to listen on. For example, to bind libwebsock to all IP’s and tcp port 1234, we would do the following:
+    int main(int argc, char *argv[]) {
+        libwebsock_context *ctx = libwebsock_init(NULL,NULL,1024);
+        ctx->onopen = ws_connected;
+        ctx->onmessage = ws_msg;
+        libwebsock_bind(ctx, "0.0.0.0","12345");
+        libwebsock_wait(ctx);
+        return 0;
+    }
 
-libwebsock_bind(ctx, “0.0.0.0”, “1234”);
+    int ws_connected(libwebsock_client_state *state) {
+        printf("Client connected: %d\n",state->sockfd);
+        return 0;
+    }
 
-5) Start Listening for Connections
+    int ws_msg(libwebsock_client_state *state, libwebsock_message *msg) {
+        printf("Payload Received: %s\n", msg->payload);
+        libwebsock_send_text(state, msg->payload);
+        return 0;
+    }
+<br>
 
-Once libwebsock is initialized, the callbacks are registered and the socketfd is set and bound, we can begin listening for incoming connections. To do this, we call the libwebsock_wait() function with the context as the argument:
+This basic example will bind a websocket to port 12345 and wait for connections. It registers callbacks for received messages and connections. When messages are received, they are sent back to the client.
+<br>
 
-libwebsock_wait(ctx);
+# API Calls and Functions
+There are several API calls that can be used by your application to interact with libwebsock. Most API calls take libwebsock data structures as their argument(s). Each function below contains a description and an example usage.
+<br>
+
+## libwebsock_init()
+Sets up libwebsock for use and returns a pointer to the libwebsock_context being initialized. The first two arguments should be NULL, as they are for current development and not in use yet. The third argument is the maximum allowed payload size per a frame. Use 0 to make it unlimited.
+
+    libwebsock_context *ctx = libwebsock_init(NULL,NULL,1024);
+
+<br>
+
+## libwebsock_bind()
+Bind libwebsock context to a socket on specified address and port. Use 0.0.0.0 to bind to all interfaces.
+
+    void libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port);
+<br>
+
+## libwebsock_bind_ssl_real()
+Start an SSL websocket on a specified host and port. Requires valid certificate and keyfile. The last argument is the chain file. Use NULL if one does not exist.
+
+    void libwebsock_bind_ssl_real(libwebsock_context *ctx, char *listen_host, char *port, char *keyfile, char *certfile, char *chainfile);
+<br>
+
+## libwebsock_send_text()
+Sends a text type single frame message.
+
+    char *message = "This is a test!";
+    libwebsock_send_text(state, message);
+<br>
+
+## libwebsock_send_binary()
+Sends a binary type single frame message.
+
+    int libwebsock_send_binary(libwebsock_client_state *state, char *in_data, unsigned int payload_len);
+<br>
+
+## libwebsock_send_all_text()
+Sends a message to all active websockets attached to a context.
+
+    int libwebsock_send_all_text(libwebsock_context *ctx, char *strdata);
+<br>
+
+## libwebsock_send_text_with_length()
+Sends a text message and sets the frames payload length to the length specified.
+
+    int libwebsock_send_text_with_length(libwebsock_client_state *state, char *strdata, unsigned int payload_len);
+<br>
+
+## libwebsock_ping()
+Sends a control frame with a ping to a specific websock session.
+
+    int libwebsock_ping(libwebsock_client_state *state);
+<br>
+
+## libwebsock_close()
+Close a particular websocket session.
+
+    int libwebsock_close(libwebsock_client_state *state);
+<br>
+
+## libwebsock_close_with_reason()
+Close a particular websocket session and send a reason.
+
+    int libwebsock_close_with_reason(libwebsock_client_state *state, unsigned short code, const char *reason);
+<br>
+
+## libwebsock_dump_frame()
+Used to dump out detailed data about a particular frame.
+
+    void libwebsock_dump_frame(libwebsock_frame *frame);
+<br>
+
+## libwebsock_version_string()
+returns the version of libwebsock in use.
+
+    char *libwebsock_version_string(void);
+<br>
+
+# Data Structures
+libwebsock has several data structures that are used to hold information. These data structures are used as arguments in the API calls and are also used in the event callbacks.
+
+## libwebsock_client_state
+This is the most commonly used data structure in liberbdovk. It contains various information about a particular websocket session state, including the socketfd for sending. We use this to identify each individual websocket connection. If you intend on adding any form of control in your application with regards to tracking websockets to specific sessions, you will want to keep track of the pointer to this structure.
+
+    typedef struct _libwebsock_client_state {
+        int sockfd;
+        int flags;
+        void *data;
+        libwebsock_frame *current_frame;
+        struct sockaddr_storage *sa;
+        struct bufferevent *bev;
+        thread_info *tlist;
+        pthread_mutex_t thread_lock;
+        int (*onmessage)(struct _libwebsock_client_state *, libwebsock_message *);
+        int (*control_callback)(struct _libwebsock_client_state *, libwebsock_frame *);
+        int (*onopen)(struct _libwebsock_client_state *);
+        int (*onclose)(struct _libwebsock_client_state *);
+        int (*onpong)(struct _libwebsock_client_state *);
+        int (*onframetoolarge)(struct _libwebsock_client_state *, libwebsock_frame *);
+        unsigned int max_frame_payload_size;
+        #ifdef WEBSOCK_HAVE_SSL
+        SSL *ssl;
+        #endif
+        libwebsock_close_info *close_info;
+        void *ctx;
+        struct _libwebsock_client_state *next;
+        struct _libwebsock_client_state *prev;
+    } libwebsock_client_state;
+<br>
+
+## libwebsock_context
+The context structure is used to track each instance of libwebsock. All elements are intialized in this structure and passed along to the libwebsock_client_state structure as needed. libwebsock_client_state keeps track of the context in the ctx pointer.
+
+    typedef struct _libwebsock_context {
+        int running;
+        int ssl_init;
+        int flags;
+        int owns_base;
+        struct event_base *base;
+        int (*onmessage)(libwebsock_client_state *, libwebsock_message *);
+        int (*control_callback)(libwebsock_client_state *, libwebsock_frame *);
+        int (*onopen)(libwebsock_client_state *);
+        int (*onclose)(libwebsock_client_state *);
+        int (*onpong)(libwebsock_client_state *);
+        int (*onframetoolarge)(libwebsock_client_state *, libwebsock_frame *);
+        libwebsock_client_state *clients_HEAD;
+        void *user_data;
+        unsigned int max_frame_payload_size;
+    } libwebsock_context;
+<br>
+
+## libwebsock_message
+This class is used for messages, not to be confused with frames. When libwebsock finishes building a frame, it puts the payload here if it is a message. It is passed on to the onmsg callback and the elements are made available to you there.
+
+    typedef struct _libwebsock_message {
+        unsigned int opcode;
+        unsigned long long payload_len;
+        char *payload;
+    } libwebsock_message;
+<br>
+
+## libwebsock_frame
+This data structure contains information about each particular frame. The only time you should actually encounter this is on the onframetoolarge callback.
+
+    typedef struct _libwebsock_frame {
+        unsigned int fin;
+        unsigned int opcode;
+        unsigned int mask_offset;
+        unsigned int payload_offset;
+        unsigned int rawdata_idx;
+        unsigned int rawdata_sz;
+        unsigned int size;
+        unsigned int payload_len_short;
+        unsigned int payload_len;
+        unsigned int *max_payload_size;
+        char *rawdata;
+        struct _libwebsock_frame *next_frame;
+        struct _libwebsock_frame *prev_frame;
+        unsigned char mask[4];
+        enum WS_FRAME_STATE state;
+    } libwebsock_frame;
+<br>
+
+## libwebsock_close_info
+To be implemented. Will contain close code and reason.
+
+# Callbacks
+
+Working with libwebsock requires knowledge of working with its callbacks. You assign your callback functions at the beginning of the initialization.
+<br>
+
+## onmsg(libwebsock_client_state *, libwebsock_message *)
+This callback is triggered any time a message is received by libwebsock. It's important to note that it only triggers once libwebsock has received all frames associated with a particular message, and has built a deliverable payload.
+
+## onopen(libwebsock_client_state *);
+This callback event is triggered each time a client connects in to libwebsock. It is usually from here that you will begin tracking the pointer to the clients state for later use.
+
+## onclose(libwebsock_client_state *);
+This event is triggered any time a libwebsock session is closed, regardless of which side initiated the close.
+
+## onframetoolarge(libwebsock_client_state *, libwebsock_frame *);
+This event is triggered any time libwebsock receives a frame whos payload data is more than the maximum size specified at initialization.
+
+

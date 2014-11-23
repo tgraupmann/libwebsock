@@ -2,8 +2,8 @@
 #ifndef WEBSOCK_CONFIG_H
 #define WEBSOCK_CONFIG_H 1
 
-#define WEBSOCK_PACKAGE_STRING "libwebsock 1.0.8"
-#define WEBSOCK_PACKAGE_VERSION "1.0.8"
+#define WEBSOCK_PACKAGE_STRING "libwebsock 0.8.7"
+#define WEBSOCK_PACKAGE_VERSION "0.8.7"
 #define WEBSOCK_PACKAGE_NAME "libwebsock"
 #define WEBSOCK_HAVE_SSL 1
 
