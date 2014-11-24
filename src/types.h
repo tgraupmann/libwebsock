@@ -21,13 +21,14 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+
 enum WS_FRAME_STATE {
         sw_start = 0,
         sw_got_two,
         sw_got_short_len,
         sw_got_full_len,
-        sw_loaded_mask,
-        sw_discard_frame
+        sw_loaded_mask
+        //sw_discard_frame
 };
 
 enum WS_THREAD_TYPE {
@@ -115,6 +116,7 @@ typedef struct _libwebsock_context {
         int ssl_init;
         int flags;
         int owns_base;
+        ev_uintptr_t *socketfd;
         struct event_base *base;
         int (*onmessage)(libwebsock_client_state *, libwebsock_message *);
         int (*control_callback)(libwebsock_client_state *, libwebsock_frame *);

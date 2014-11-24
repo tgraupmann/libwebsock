@@ -74,7 +74,65 @@ The following is a simple example to get you up and going:
     }
 <br>
 
-This basic example will bind a websocket to port 12345 and wait for connections. It registers callbacks for received messages and connections. When messages are received, they are sent back to the client.
+This basic example will bind a websocket to port 12345 and wait for connections. It registers callbacks for received messages and connections. When messages are received, they are sent to the ws_msg function and can be retrieved from msg->payload . The following is a JavaScript example for connecting and testing the above code:
+
+    <script>
+        var socket;
+
+        function OpenSocket() {
+            if (window.hasOwnProperty("WebSocket")) { // webkit-browser
+                socket = new WebSocket("ws://localhost:12345/");
+            }
+            else if (window.hasOwnProperty("MozWebSocket")) { // firefox
+                socket = new MozWebSocket("ws://localhost:12345/");
+            }
+            else { // browser doesnt support websockets
+                alert("Your browser doesn't support WebSocket.");
+                return;
+            }
+
+            socket.onopen = function() { // the socket is ready, send something
+                //socket.send("Testing websocket data flow...");
+            };
+
+            socket.onmessage = function(msg) { // the server send something
+                alert("The server said: " + msg.data);
+            };
+
+            socket.onclose = function() { // the server closed the connection
+                alert("The server closed the connection.");
+            };
+        }
+
+        function SendHello() {
+            socket.send(“Hello!”);
+        }
+
+        function LargeDataTest() {
+            var text = "";
+            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            // Modify the 1024 if you want to send more than just 1kb.
+            for( var i=0; i < 1024; i++ ) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+
+            socket.send(text);
+        }
+
+        function Close() {
+            socket.close();
+        }
+
+    </script>
+
+    <a href="#" onClick="JavaScript: OpenSocket()">Open Socket</a><br>
+    <a href="#" onClick="JavaScript: SendHello()”>Send Hello!</a><br>
+    <a href="#" onClick="JavaScript: LargeDataTest()">Large Frame Test</a><br>
+    <a href="#" onClick="JavaScript: Close()">Close Socket</a><br>
+<br>
+Put the above code in an html file (i.e. test.html) and make sure to modify the port in the ws:// line above if you've modified it in the example. This will give you a basic websocket connection that you can test with.
+
 <br>
 
 # API Calls and Functions

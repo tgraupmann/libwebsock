@@ -148,7 +148,8 @@ void
 libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port)
 {
     struct addrinfo hints, *servinfo, *p;
-    //struct event *listener_event;
+    // TODO: Do I need listener_event ??
+    struct event *listener_event;
     evutil_socket_t sockfd;
     int yes = 1;
     
@@ -198,6 +199,8 @@ libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port)
         exit(-1);
     }
     
+    ctx->socketfd = sockfd; // Set the socketfd on the context so user can
+                            // thread the context
     libwebsock_bind_socket(ctx,  sockfd);
 }
 
@@ -212,7 +215,6 @@ libwebsock_context *
 libwebsock_init(struct event_base *base, int *flags, unsigned int max_payload_size)
 {
     libwebsock_context *ctx;
-    //struct event_base *base = libwebsock_make_event_base();
     ctx = (libwebsock_context *) lws_calloc(sizeof(libwebsock_context));
     
     if (base == NULL){
@@ -227,10 +229,16 @@ libwebsock_init(struct event_base *base, int *flags, unsigned int max_payload_si
         
         base = event_base_new();
         
+        //evthread_use_pthreads();
+        
         ctx->base = base;
         ctx->owns_base = 1;
         
     } else {
+        // Allow the specification of our own libevent base.
+        // This allows us to create our own bases, and use one
+        // per a thread if user chooses not to fork() their own
+        // implementations.
         ctx->base = base;
     }
     
