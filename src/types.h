@@ -116,7 +116,7 @@ typedef struct _libwebsock_context {
         int ssl_init;
         int flags;
         int owns_base;
-        ev_uintptr_t *socketfd;
+        evutil_socket_t socketfd;
         struct event_base *base;
         int (*onmessage)(libwebsock_client_state *, libwebsock_message *);
         int (*control_callback)(libwebsock_client_state *, libwebsock_frame *);
