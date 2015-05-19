@@ -1,5 +1,5 @@
 #! /bin/sh
-glibtoolize
+libtoolize
 aclocal \
 && automake --add-missing \
 && autoconf
