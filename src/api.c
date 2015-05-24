@@ -199,8 +199,6 @@ libwebsock_bind(libwebsock_context *ctx, char *listen_host, char *port)
         exit(-1);
     }
     
-    ctx->socketfd = sockfd; // Set the socketfd on the context so user can
-                            // thread the context
     libwebsock_bind_socket(ctx,  sockfd);
 }
 
@@ -208,6 +206,7 @@ void
 libwebsock_bind_socket(libwebsock_context *ctx, evutil_socket_t sockfd)
 {
     struct event *listener_event = event_new(ctx->base, sockfd, EV_READ | EV_PERSIST, libwebsock_handle_accept, (void *) ctx);
+    ctx->socketfd = sockfd;
     event_add(listener_event, NULL);
 }
 
