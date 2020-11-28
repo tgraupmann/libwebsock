@@ -38,3 +38,27 @@ Payden Sutherland passed away on September 24, 2014, mid-development of this lib
 The library is almost complete, and incredibly powerful - not to mention easy to use. I
 felt that picking it up and getting it finished was the right thing to do. All initial
 credit belongs to him for his hard work and time put in to the project.
+
+**From the previous README**
+
+This library abstracts away WebSocket protocol framing for
+client connections.  It aims to provide a *somewhat* similar
+API to the implementation in your browser.  You create a new
+client context and create callbacks to be triggered when
+certain events occur (onopen, onmessage, onclose, onerror).
+
+Your best bet for getting started is to look at test.c which shows
+how to connect to an echo server using libwsclient calls.
+
+Also, to install:
+
+./autogen.sh
+
+./configure && make && sudo make install
+
+Then link your C program against wsclient: 'gcc -g -O2 -o test test.c -lwsclient'
+
+
+**Dependencies**
+
+If you get an error about libevent missing do a make install libevent from source at https://github.com/libevent/libevent.
