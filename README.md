@@ -61,4 +61,4 @@ Then link your C program against wsclient: 'gcc -g -O2 -o test test.c -lwsclient
 
 **Dependencies**
 
-If you get an error about libevent missing do a make install libevent from source at https://github.com/libevent/libevent.
+If you get a configure error `libevent_pthreads required, failing` do a make install for libevent from source at https://github.com/libevent/libevent.
